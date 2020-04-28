@@ -5,8 +5,11 @@ from django.views.generic import (
     DetailView,
     CreateView,
     UpdateView,
-    DeleteView
+    DeleteView,
+    FormView
 )
+from django.http import Http404, HttpResponseRedirect
+from django.utils.translation import gettext as _
 from .models import Post, Comment
 
 
@@ -28,16 +31,11 @@ class PostListView(ListView):
     ordering = ['-date_posted']
 
 
-#class PostDetailView(DetailView):
-#    model = Post
-
-
-    
-
-
-class PostDetailView(DetailView):
+class PostDetailView(DetailView, FormView):
     model = Post
+    template_name = 'post_detail.html'
     slug_url_kward = 'pk_slug'
+    form_class = CommentForm
 
     def get_object(self, queryset=None):
         # This function overrides DetialView.get_object()
@@ -70,58 +68,13 @@ class PostDetailView(DetailView):
         except queryset.model.DoesNotExist:
             raise Http404(_("No %(verbose_name)s found matching the query") %
                           {'verbose_name': queryset.model._meta.verbose_name})
-        return obj
+        return obj    
 
-    def dispatch():
-        post = get_object_or_404(Post)
-        comments = post.comments.filter(active=True, slug=slug)
-        new_comment = None
-
-
-
-        if request.method == 'POST':
-            comment_form = CommentForm(data=request.POST)
-            if comment_form.is_valid():
-                new_comment = comment_form.save(commit=False)
-                new_comment.post = post
-                new_comment.save()
-            else:
-                comment_form = CommentForm()
-                return render(request, post_detail.html, {'post': post,
-                                           'comments': comments,
-                                           'new_comment': new_comment,
-                                          'comment_form': comment_form})
-
-    # Create Comment object but don't save to database yet
-             # Assign the current post to the comment
-             # Save the comment to the database
-
-   #     return self.get(*args, **kwargs)
-    #elif request.method == 'POST':
-     #   return self.post(*args, **kwargs)
-    #elif #... and so on
-
-    #def post_detail(request, slug):
-     #   post = get_object_or_404(Post, slug=slug)
-      #  comments = post.comments.all()
-       # new_comment = None
-        # Comment posted
-        #if request.method == 'POST':
-         #   comment_form = CommentForm(data=request.POST)
-          #  if comment_form.is_valid():
-            # Create Comment object but don't save to database yet
-           #     new_comment = comment_form.save(commit=False)
-            # Assign the current post to the comment
-            #    new_comment.post = post
-            # Save the comment to the database
-             #   new_comment.save()
-        #else:
-         #   comment_form = CommentForm()
-
-        #return render(request, template_name, {'post': post,
-         #                                  'comments': comments,
-          #                                 'new_comment': new_comment,
-           #                                'comment_form': comment_form})
+    def form_valid(self, form):
+        comment = form.save(commit=False)
+        comment.post = self.object
+        comment.save()
+        return HttpResponseRedirect(self.get_success_url())
  
 
 class PostCreateView(LoginRequiredMixin, CreateView):

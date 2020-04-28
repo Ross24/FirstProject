@@ -11,7 +11,7 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('', PostListView.as_view(), name='blog-home'),
-    path('post/<slug:pk_slug>', views.post_detail, name='post-detail'),
+    path('post/<slug:pk_slug>', PostDetailView.as_view(), name='post-detail'),
     path('post/new/', PostCreateView.as_view(), name='post-create'),
     path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post-update'),
     path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
